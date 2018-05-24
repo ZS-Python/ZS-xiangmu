@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from redis import StrictRedis
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
+from flask_script import Manager
+from flask_migrate import Migrate,MigrateCommand
 
 
 class Config():
@@ -40,7 +42,17 @@ redis_store = StrictRedis(host=Config.REDIS_HOST,port=Config.REDIS_PORT)
 # 开启csrf保护,当我们不断使用flask_wtf中扩展的flask_form类自定义表单时, 需要自己开启csrf保护
 CSRFProtect(app)
 
+# 配置flask_session, 将session数据写入redis数据库
+Session(app)
 
+# 创建脚本管理对象
+manage = Manager(app)
+
+# 让迁移和app和db关联
+Migrate(app,db)
+
+# 将迁移脚本添加到manage
+manage.add_command('sql', MigrateCommand)
 
 
 
@@ -59,4 +71,4 @@ def index():
 
 if __name__ == '__main__':
 
-    app.run(debug=True)
+    manage.run()
