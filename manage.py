@@ -2,11 +2,12 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from redis import StrictRedis
 from flask_wtf.csrf import CSRFProtect
+from flask_session import Session
 
 
 class Config():
     # 配置秘钥:项目中CSRF和sessin主要用到,还有一些其他签名
-    SCRSTE_KEY = '123456'
+    SECRET_KEY = '123456'
 
     #开启调试
     DEBUG = True
@@ -18,9 +19,17 @@ class Config():
     REDIS_HOST = '192.168.211.130'
     REDIS_PORT = '6379'
 
+    # 配置flask_session, 将session数据写入redis数据库
+    # 指定session存储在redis
+    SESSION_TYPE = 'redis'
+    # 告诉session redis的位置
+    SESSION_REDIS = StrictRedis(host=REDIS_HOST,port=REDIS_PORT)
+    # 是否将session签名后在存储
+    SESSION_USE_SIGNER = True
+    # 当SESSION_USE_SIGNER为True时,设置session的有效期才可以成立,正好默认就是True
+    PERMANENT_SESSION_LIFETIME = 60*60*24
 
-
-app = Flask(__name__)
+app = Flask(__name__ )
 
 app.config.from_object(Config)
 
@@ -32,12 +41,22 @@ redis_store = StrictRedis(host=Config.REDIS_HOST,port=Config.REDIS_PORT)
 CSRFProtect(app)
 
 
+
+
+
 @app.route("/")
 def index():
+    # redis_store.set("name",'zhangsheng')
+
+    # 测试session
+    from flask import session
+    # 把name:zs写入浏览器 cookies
+    session['name'] = 'zs'
+
     return "index"
 
-if __name__ == '__main__':
 
-    # redis_store.set("name",'zhangsheng')
+
+if __name__ == '__main__':
 
     app.run(debug=True)
