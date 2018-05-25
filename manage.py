@@ -3,8 +3,10 @@ from flask_migrate import Migrate,MigrateCommand
 from info import create_app,db
 
 
-app = create_app('pro')
+dict = create_app('pro')
 
+app = dict['app']
+redis_store = dict['redis_store']
 
 # 创建脚本管理对象
 manage = Manager(app)
@@ -19,7 +21,7 @@ manage.add_command('sql', MigrateCommand)
 
 @app.route("/")
 def index():
-    # redis_store.set("name",'zhangsheng')
+    redis_store.set("name",'zhangshengssddadas')
 
     # 测试session
     from flask import session
