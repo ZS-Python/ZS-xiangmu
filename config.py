@@ -1,5 +1,5 @@
 from redis import StrictRedis
-
+import logging
 
 
 class Config():
@@ -13,7 +13,7 @@ class Config():
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # 配置Redis数据库
-    REDIS_HOST = '192.168.211.130'
+    REDIS_HOST = '127.0.0.1'
     REDIS_PORT = '6379'
 
     # 配置flask_session, 将session数据写入redis数据库
@@ -30,18 +30,23 @@ class Config():
 # 开发
 class DevelopmentConfig(Config):
     pass
+    # 加载日志等级
+    LEVEL_LOG = logging.DEBUG
 
 # 测试
 class UnittestConfig(Config):
     DEBUG = True
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_database/new_information_test'
+    # 加载日志等级
+    LEVEL_LOG = logging.DEBUG
 
 # 发布
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_database/new_information_online'
-
+    # 加载日志等级
+    LEVEL_LOG = logging.ERROR
 
 # 准备工厂方法
 configs = {
