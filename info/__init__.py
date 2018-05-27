@@ -51,5 +51,8 @@ def create_app(config_name):
     # 注册路由到app(在哪里注册就在哪里导入蓝图)
     from info.modules.index import index_blue
     app.register_blueprint(index_blue)
+    # 把passport路由注册到app
+    from info.modules.passport import passport_blue
+    app.register_blueprint(passport_blue)
 
     return app

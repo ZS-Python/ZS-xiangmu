@@ -158,10 +158,18 @@ $(function(){
     })
 })
 
+// 图片验证码的编号,用UUID标识,为了在服务器端存储设置key
 var imageCodeId = ""
 
 // TODO 生成一个图片验证码的编号，并设置页面中图片验证码img标签的src属性
 function generateImageCode() {
+    // 获取UUID (定义好的固定方法)
+    imageCodeId = generateUUID()
+    // 先服务器发起请求获取图片验证码(相当于路径图片)
+    var url = '/passport/image_code?imageCodeId=' + imageCodeId // 这是?表示发送给服务器,后面是查询字符串,服务器通过request.args获取
+    // 把这个图片路径给img标签的src属性
+    $('.get_pic_code').attr('src',url)
+
 
 }
 
@@ -209,6 +217,7 @@ function getCookie(name) {
     return r ? r[1] : undefined;
 }
 
+// 百度出来的
 function generateUUID() {
     var d = new Date().getTime();
     if(window.performance && typeof window.performance.now === "function"){

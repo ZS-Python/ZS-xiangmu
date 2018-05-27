@@ -1,8 +1,6 @@
 from flask_script import Manager
 from flask_migrate import Migrate,MigrateCommand
-from info import create_app,db
-# 把表的模型导入manage.py
-from info.modules import models
+from info import create_app,db,modules  # 把表的模型导入manage.py
 
 
 app = create_app('dev')
