@@ -40,10 +40,10 @@ def create_app(config_name):
     db.init_app(app)
 
     global redis_store
-    redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT)
+    redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT,decode_responses=True)
 
     # 开启csrf保护,当我们不使用flask_wtf中扩展的flask_form类自定义表单时, 需要自己开启csrf保护
-    CSRFProtect(app)
+    # CSRFProtect(app)
 
     # 配置flask_session, 将session数据写入redis数据库
     Session(app)

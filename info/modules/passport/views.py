@@ -9,7 +9,7 @@ from info.libs.yuntongxun.sms import CCP
 
 
 
-@passport_blue.route('/sms_code')
+@passport_blue.route('/sms_code',methods=['POST'])
 def sms_code():
     '''发送短信验证码'''
     # 1,接收参数(手机号,图片验证码,图片uuid)
@@ -30,10 +30,10 @@ def sms_code():
     image_code_id = json_dict.get('image_code_id')
 
     # 2,校验参数(是否存在,手机好是否合理)
-    if not all([mobile,image_code,image_code_id]):
+    if not all([mobile,image_code_client,image_code_id]):
         # 响应给ajax的状态(errno表示状态码, errmsg表示状态说明) PARAMERR:代表参数错误
         return jsonify(errno = response_code.RET.PARAMERR, errmsg = '缺少参数')
-    if not re.match(r'^1[345678][0-9][9]&'):
+    if not re.match(r'^1[345678][0-9]{9}$',mobile):
         return jsonify(errno=response_code.RET.PARAMERR, errmsg='手机格式错误')
 
     # 3,查询服务器存储的图片验证码
@@ -54,7 +54,7 @@ def sms_code():
     sms_code = '%06d' % random.randint(0, 999999)
 
     # 6,调用CCP()封装的发送短信的方法,发送短信给手机
-    result = CCP.send_template_sms(mobile,[sms_code,5],1)  # 5; 5分钟后过期, 1: 表示1号默认短信模板
+    result = CCP().send_template_sms(mobile,[sms_code,5],1)  # 5; 5分钟后过期, 1: 表示1号默认短信模板
     if result != 0:
         return jsonify(errno=response_code.RET.THIRDERR, errmsg='发送短信验证码失败')  # 第三方错误
 
