@@ -170,7 +170,6 @@ function generateImageCode() {
     // 把这个图片路径给img标签的src属性
     $('.get_pic_code').attr('src',url)
 
-
 }
 
 // 发送短信验证码
