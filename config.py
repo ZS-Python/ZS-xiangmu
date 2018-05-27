@@ -9,7 +9,7 @@ class Config():
     #开启调试
     DEBUG = True
     # 连接Mysql数据库
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_database/new_information'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_information'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # 配置Redis数据库
@@ -37,7 +37,7 @@ class DevelopmentConfig(Config):
 class UnittestConfig(Config):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_database/new_information_test'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_database/new_information'
     # 加载日志等级
     LEVEL_LOG = logging.DEBUG
 

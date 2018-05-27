@@ -8,6 +8,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
+
 def create_log(level):
     # 设置日志的记录等级
     logging.basicConfig(level=level)  # 调试debug级
@@ -24,6 +25,7 @@ def create_log(level):
 # 创建mysql数据库对象
 db = SQLAlchemy()
 
+redis_store = None
 
 def create_app(config_name):
     # 集成日志: 根据不同的配置环境,加载不同的日志等级
@@ -37,17 +39,17 @@ def create_app(config_name):
     # 手动调用init_app(app)
     db.init_app(app)
 
+    global redis_store
     redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT)
 
-    # 开启csrf保护,当我们不断使用flask_wtf中扩展的flask_form类自定义表单时, 需要自己开启csrf保护
+    # 开启csrf保护,当我们不使用flask_wtf中扩展的flask_form类自定义表单时, 需要自己开启csrf保护
     CSRFProtect(app)
 
     # 配置flask_session, 将session数据写入redis数据库
     Session(app)
 
-    dict = {
-        'app':app,
-        'redis_store':redis_store
-    }
+    # 注册路由到app(在哪里注册就在哪里导入蓝图)
+    from info.modules.index import index_blue
+    app.register_blueprint(index_blue)
 
-    return dict
+    return app
