@@ -9,6 +9,74 @@ from info.libs.yuntongxun.sms import CCP
 from info.models import User
 
 
+@passport_blue.route('/exit')
+def exit():
+    '''退出登陆'''
+    # 1, 清理session
+    try:
+        session.pop('user_id',None) # None如果没清成功,强制清空
+        session.pop('mobile',None)
+        session.pop('nick_name',None)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='退出登陆失败')
+
+    return jsonify(errno=response_code.RET.OK, errmsg='退出登陆成功')
+
+
+
+@passport_blue.route('/login',methods=['POST'])
+def login():
+    '''登陆'''
+    # 1, 接受参数(手机号和密码明文)
+    # 2, 校验参数是否齐全
+    # 3, 用手机号获取用户信息
+    # 4, 匹配要登陆的用户的密码
+    # 5, 更新最后一次登陆时间
+    # 6, 将状态保持写入session
+    # 7, 响应登陆结果
+
+    # 1, 接受参数(手机号和密码明文)
+    json_dict = request.json
+    mobile = json_dict.get('mobile')
+    password = json_dict.get('password')
+
+    # 2, 校验参数是否齐全
+    if not all([mobile,password]):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+    if not re.match(r'^1[345678][0-9]{9}$',mobile):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='手机号格式错误')
+
+    # 3, 用手机号获取用户信息
+    try:
+        user = User.query.filter(User.mobile==mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='获取用户信息失败')
+    if not user:
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='用户名或者密码错误啦')
+
+    # 4, 匹配要登陆的用户的密码
+    if not user.check_passowrd(password):
+        return jsonify(errno=response_code.RET.PWDERR, errmsg='用户名或者密码错误')
+
+    # 5, 更新最后一次登陆时间
+    user.last_login = datetime.datetime.now()
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=response_code.RET.PWDERR, errmsg='更新最后登陆时间失败')
+
+    # 6, 将状态保持写入session
+    session['user_id'] = user.id
+    session['mobile'] = user.mobile
+    session['nick_name'] = user.nick_name
+
+    # 7, 响应登陆结果
+    return jsonify(errno=response_code.RET.OK, errmsg='登陆成功')
+
 @passport_blue.route('/register',methods=['POST'])
 def register():
     '''注册'''
@@ -24,6 +92,7 @@ def register():
     # 1, 接收参数(手机号, 短信验证码,明文密码)
     # request.json = json.loads(request.data)
     json_dict = request.json
+    print('类型:',type(json_dict))
     mobile = json_dict.get('mobile')
     smscode_client = json_dict.get('smscode')
     password = json_dict.get('password')
@@ -43,6 +112,7 @@ def register():
         return jsonify(errno=response_code.RET.PARAMERR, errmsg='短信验证码不存在')
 
     print(smscode_server,smscode_client)
+
     # 4, 对比客户端传来的验证码是否正确
     if smscode_server != smscode_client:
         return jsonify(errno=response_code.RET.PARAMERR, errmsg='输入短信验证码错误')
@@ -108,7 +178,7 @@ def sms_code():
 
     # 3,查询服务器存储的图片验证码
     try:
-        image_code_server = redis_store.get('imageCode: ' + image_code_id)
+        image_code_server = redis_store.get('imageCode:' + image_code_id)
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=response_code.RET.DBERR, errmsg='查询图片验证码失败')
@@ -120,7 +190,6 @@ def sms_code():
 
     # 4,和客户端传入的图片验证码进行比较 (服务器查出来的是大写,转成小写比较)
     if image_code_server.lower() != image_code_client:
-
         return jsonify(errno=response_code.RET.DATAERR, errmsg='输入验证码有误')
 
     # 5,如果成功,生成短信验证码(不足六位数字,前面用0补充)
@@ -167,7 +236,7 @@ def image_code():
 
     # 4, 保存图片验证码到服务器
     try:                                                    # 过期时间已设置300秒
-        redis_store.set('imageCode: ' + imageCodeId, text, constants.IMAGE_CODE_REDIS_EXPIRES)
+        redis_store.set('imageCode:' + imageCodeId, text, constants.IMAGE_CODE_REDIS_EXPIRES)
     except Exception as e:
         current_app.logger.error(e)
         abort(500)

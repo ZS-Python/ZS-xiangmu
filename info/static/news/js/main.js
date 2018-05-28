@@ -120,6 +120,27 @@ $(function(){
         }
 
         // 发起登录请求
+        var data_dict = {
+            'mobile':mobile,
+            'password':password
+        }
+
+        $.ajax({
+            url:'/passport/login',
+            type:'post',
+            contentType:'application/json',
+            data:JSON.stringify(data_dict),
+            success:function (response) {
+                if (response.errno == '0'){
+                    //登陆成功
+                    location.reload()
+                }else{
+                    alert(response.errmsg)
+                }
+            }
+        })
+
+
     })
 
 
@@ -177,6 +198,18 @@ $(function(){
 
     })
 })
+
+// 退出登陆
+function exit() {
+    $.get('/passport/exit',function (response) {
+            if (response.errno == '0'){
+                // 退出成功
+                location.reload()
+            }else{
+                alert(response.errmsg)
+            }
+    });
+}
 
 // 图片验证码的编号,用UUID标识,为了在服务器端存储设置key
 var imageCodeId = ""
