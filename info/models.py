@@ -59,13 +59,14 @@ class User(BaseModel, db.Model):
     # 当前用户所发布的新闻
     news_list = db.relationship('News', backref='user', lazy='dynamic')
 
+    # 给User添加一个属性叫做password,不要和password_hash重名
     @property
     def password(self):
         raise AttributeError("当前属性不可读")
 
     @password.setter
     def password(self, value):
-        self.password_hash = generate_password_hash(value)
+        self.password_hash = generate_password_hash(value)  # 加密的值赋值给password_hash
 
     def check_passowrd(self, password):
         return check_password_hash(self.password_hash, password)

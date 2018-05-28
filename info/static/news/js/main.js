@@ -154,6 +154,26 @@ $(function(){
         }
 
         // 发起注册请求
+        var data_dict = {
+            'mobile':mobile,
+            'smscode':smscode,
+            'password':password
+        }
+
+        $.ajax({
+            url:'/passport/register',
+            type:'post',
+            contentType:'application/json',
+            data:JSON.stringify(data_dict),
+            success:function (response) {
+                if (response.errno == '0') {
+                    // 注册成功后刷新界面
+                    location.reload()
+                }else{
+                    alert(response.errmsg)
+                }
+            }
+        });
 
     })
 })
@@ -191,7 +211,7 @@ function sendSMSCode() {
         return;
     }
     var data_dict = {
-        'moblie':mobile,
+        'mobile':mobile,
         'image_code':imageCode,
         'image_code_id':imageCodeId
     }
@@ -230,10 +250,12 @@ function sendSMSCode() {
                     // 将点击按钮的onclick事件函数恢复回去
                 $(".get_code").attr("onclick", "sendSMSCode();");
                 // 如果错误码是4004，代表验证码错误，重新生成验证码
-                if (resp.errno == "4004") {
+                if (response.errno == "4004") {
                     generateImageCode()
+
+                    alert(response.errmsg);
                 }
-                alert(response.errmsg);
+
             }
         }
 
