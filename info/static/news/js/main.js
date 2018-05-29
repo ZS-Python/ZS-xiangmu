@@ -130,6 +130,9 @@ $(function(){
             type:'post',
             contentType:'application/json',
             data:JSON.stringify(data_dict),
+            // 字典headers:{key,cookie中的scrf_token}
+            // 请求中需要设置csrf_token,让服务器辨别是否是服务器之前响应的网页
+            headers:{'X-CSRFToken': getCookie('csrf_token')},
             success:function (response) {
                 if (response.errno == '0'){
                     //登陆成功
@@ -186,6 +189,7 @@ $(function(){
             type:'post',
             contentType:'application/json',
             data:JSON.stringify(data_dict),
+            headers:{'X-CSRFToken': getCookie('csrf_token')},
             success:function (response) {
                 if (response.errno == '0') {
                     // 注册成功后刷新界面
@@ -254,6 +258,7 @@ function sendSMSCode() {
         url:'/passport/sms_code',
         type:'post',
         data:JSON.stringify(data_dict),
+        headers:{'X-CSRFToken': getCookie('csrf_token')},
         contentType:'application/json',
         success:function(response){
             if (response.errno == '0'){

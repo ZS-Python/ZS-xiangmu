@@ -148,7 +148,6 @@ def register():
 
 
 
-
 @passport_blue.route('/sms_code',methods=['POST'])
 def sms_code():
     '''发送短信验证码'''

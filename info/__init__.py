@@ -6,6 +6,8 @@ from flask_session import Session
 from config import configs
 import logging
 from logging.handlers import RotatingFileHandler
+from flask_wtf import csrf
+from info.utils.comment import do_rank
 
 
 
@@ -31,9 +33,9 @@ def create_app(config_name):
     # 集成日志: 根据不同的配置环境,加载不同的日志等级
     create_log(configs[config_name].LEVEL_LOG)
 
-    # 根据传入的参数, 创建不同app,参数就是外界传入的配置环境
     app = Flask(__name__ )
 
+    # 根据传入的参数, 创建不同app,参数就是外界传入的配置环境
     app.config.from_object(configs[config_name])
 
     # 手动调用init_app(app)
@@ -43,7 +45,21 @@ def create_app(config_name):
     redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT,decode_responses=True)
 
     # 开启csrf保护,当我们不使用flask_wtf中扩展的flask_form类自定义表单时, 需要自己开启csrf保护
-    # CSRFProtect(app)
+    CSRFProtect(app)
+
+    # 开启csrf_token保护
+    # 1, 开启csrf_token保护
+    # 请求勾子: 服务器先自动生成csrf_token值, 在每次请求结束后都把csrf_token值写入到浏览器的cookie.
+    @app.after_request
+    def after_request(response):
+        # 2,生成csrf_token值
+        csrf_token = csrf.generate_csrf()
+        # 3, 把csrf_token写入浏览器
+        response.set_cookie('csrf_token',csrf_token)
+        return response
+
+    # 将自定义函数转换成模板可直接执行的过滤器
+    app.add_template_filter(do_rank, 'rank')
 
     # 配置flask_session, 将session数据写入redis数据库
     Session(app)
@@ -54,5 +70,6 @@ def create_app(config_name):
     # 把passport路由注册到app
     from info.modules.passport import passport_blue
     app.register_blueprint(passport_blue)
+
 
     return app
