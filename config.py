@@ -9,7 +9,7 @@ class Config():
     #开启调试
     DEBUG = True
     # 连接Mysql数据库
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_information'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1:3306/new_information_2'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # 配置Redis数据库

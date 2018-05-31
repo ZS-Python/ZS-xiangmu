@@ -1,12 +1,13 @@
 var currentCid = 1; // 当前分类 id
 var cur_page = 1; // 当前页
 var total_page = 1;  // 总页数
-var data_querying = true;   // 是否正在向后台获取数据
+var data_querying = true;   // 正在向后台获取数据,不能上拉刷新, 为false获取完毕,可以下拉
 
 
 $(function () {
     // 网页启动完成后,立即主动获取新闻数据列表
     updateNewsData()
+
     // 首页分类切换
     $('.menu li').click(function () {
         var clickCid = $(this).attr('data-cid')
@@ -43,6 +44,17 @@ $(function () {
 
         if ((canScrollHeight - nowScroll) < 100) {
             // TODO 判断页数，去更新新闻数据
+            if (!data_querying){
+                //加载下一页,同时改成ture
+                data_querying = true;
+                // 继续加载下一页, 同时cur_page要加1页,(当前页加1)
+                cur_page += 1;
+
+                // 判断是否时最后一页
+                if (cur_page < total_page){
+                    updateNewsData()
+                }
+            }
         }
     })
 })
@@ -56,8 +68,15 @@ function updateNewsData() {
     }
 
     $.get('/news_list',data_dict,function (response) {
+        // 数据加载完,不管数据是否成功失败, 都要把状态改成没有正在加载数据.可以上拉
+        data_querying = false;
+
+
         if (response.errno == '0'){
-        //    获取数据成功
+            //  响应成功,告诉浏览器一共多少页
+            total_page = response.data.total_page
+
+            //   获取数据成功
             for (var i=0;i<response.data.news_dict_list.length;i++) {
                 var news = response.data.news_dict_list[i]
                 var content = '<li>'
@@ -72,7 +91,7 @@ function updateNewsData() {
                 $(".list_con").append(content)
             }
         }else{
-            alter(response.errmsg)
+            alert(response.errmsg)
         }
     })
 }

@@ -68,6 +68,7 @@ def index_news():
 
 
 
+
 # 把视图注册到蓝图
 @index_blue.route('/')
 def index():
