@@ -1,6 +1,6 @@
 from . import index_blue
 from flask import render_template,current_app,session,request,jsonify
-from info.models import User,News
+from info.models import User,News,Category
 from info import constants,response_code
 
 
@@ -74,17 +74,22 @@ def index_news():
 def index():
     # 判断登陆中显示用户名, 退出了显示"登陆/注册"
     # 1, 从redis获取用户登陆信息,直接取user_id
+    # 2, 主页点击排行
+    # 3, 新闻分类标签展示
+
+
+    # 1, 从redis获取用户登陆信息,直接取user_id
     user_id = session.get('user_id')
 
     user = None
-    # 2, 判断是否信息存在,存在则显示该用户名
+    # 判断是否信息存在,存在则显示该用户名
     if user_id:
         try:
             user = User.query.get(user_id)    # user是通过user_id创建的指定对象
         except Exception as e:
             current_app.logger.error(e)
 
-    # 显示点击排行
+    # 2, 显示点击排行
     # 查询新闻数据,根据clicks的点击量进行倒序排序
     # news_clicks = [News1,News2,News3,News4,News5,News6,],每个模型对象
     news_clicks = []
@@ -93,11 +98,21 @@ def index():
     except Exception as e:
         current_app.logger.error(e)
 
+    # 3, 新闻分类标签展示
+    categories = []
+    try:
+        categories =Category.query.all()
+    except Exception as e:
+        current_app.logger.error(e)
+
+
     # 渲染的很多
     context = {
         'user':user,
-        'news_clicks':news_clicks
+        'news_clicks':news_clicks,
+        'categories':categories
     }
+
 
     return render_template('news/index.html',context = context)
 

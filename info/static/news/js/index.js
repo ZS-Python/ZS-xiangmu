@@ -76,13 +76,19 @@ function updateNewsData() {
             //  响应成功,告诉浏览器一共多少页
             total_page = response.data.total_page
 
+            // 新闻分类切换后,第一页数据清空,不然会显示之前的数据
+            if (cur_page ==1){
+                $('.list_con').html('');
+            }
+
+
             //   获取数据成功
             for (var i=0;i<response.data.news_dict_list.length;i++) {
                 var news = response.data.news_dict_list[i]
                 var content = '<li>'
-                content += '<a href="#" class="news_pic fl"><img src="' + news.index_image_url + '?imageView2/1/w/170/h/170"></a>'
-                content += '<a href="#" class="news_title fl">' + news.title + '</a>'
-                content += '<a href="#" class="news_detail fl">' + news.digest + '</a>'
+                content += '<a href="/news/detail/'+news.id+'" class="news_pic fl"><img src="' + news.index_image_url + '?imageView2/1/w/170/h/170"></a>'
+                content += '<a href="/news/detail/'+news.id+'" class="news_title fl">' + news.title + '</a>'
+                content += '<a href="/news/detail/'+news.id+'" class="news_detail fl">' + news.digest + '</a>'
                 content += '<div class="author_info fl">'
                 content += '<div class="source fl">来源：' + news.source + '</div>'
                 content += '<div class="time fl">' + news.create_time + '</div>'
