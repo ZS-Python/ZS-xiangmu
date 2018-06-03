@@ -1,8 +1,76 @@
 from .import news_blue
 from flask import render_template,session,current_app,abort,request,jsonify
-from info.models import News,User,Comment
+from info.models import News,User,Comment,CommentLike
 from info import constants,db,response_code
 # 把视图注册到蓝图
+
+
+@news_blue.route('/comment_like',methods=['POST'])
+def comment_like():
+    '''点赞和取消点赞'''
+    # 1,获取用户信息
+    user_id = session.get('user_id')
+    user = None
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+    if not user:
+        return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登陆')
+
+    # 2, 接收参数
+    comment_id = request.json.get('comment_id')
+    action = request.json.get('action')
+
+    # 3, 校验参数
+    if not all([comment_id,action]):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+
+    if action not in ['add','remove']:
+        return jsonify(errno=response_code.RET.DBERR, errmsg='参数错误')
+
+    # 4, 查询要点赞的评论是否存在
+    try:
+        comment = Comment.query.get(comment_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数错误')
+    if not comment:
+        return jsonify(errno=response_code.RET.NODATA, errmsg='评论不存在')
+
+    # 5, 点赞和取消点赞
+    # 点赞和取消点赞之前要查询点赞记录存在不存在
+    comment_like_model = CommentLike.query.filter(CommentLike.user_id == user_id,CommentLike.comment_id == comment_id).first()
+
+    if action == 'add':
+        # 如果点赞记录不存在才能点赞
+        if not comment_like_model:
+            comment_like_model = CommentLike()
+            comment_like_model.comment_id = comment_id
+            comment_like_model.user_id = user_id
+            # 累加点赞量
+            comment.like_count += 1
+
+            db.session.add(comment_like_model)
+
+    if action == 'remove':
+        # 如果点赞记录存在才能取消点赞
+        if comment_like_model:
+            # 删除点赞记录
+            db.session.delete(comment_like_model)
+            # 累减点赞量
+            comment.like_count -= 1
+
+    # 更新数据库到
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+
+    # 6, 响应点赞和取消点赞的结果
+    return jsonify(errno=response_code.RET.OK, errmsg='OK')
+
 
 
 @news_blue.route('/news_comment',methods=['POST'])
@@ -191,11 +259,30 @@ def news_detail(news_id):
     except Exception as e:
         current_app.logger.error(e)
 
+    comment_like_ids = []
+    if user:
+        try:
+            # 为了用户登陆后自动显示已点赞的高亮
+            # 先查询当前用户点赞了的所有评论
+            comment_likes = CommentLike.query.filter(CommentLike.user_id == user.id)
+            # 取出这些评论对应的id,(列表生成式)
+            comment_like_ids = [comment_like.comment_id for comment_like in comment_likes]
+            # comment_like_ids是个列表,里面是当前用户已点赞的评论的id号
+        except Exception as e:
+            current_app.logger.error(e)
+
+
     # 遍历对象列表,转成字典列表(为了做些数据的格式化等处理,不转也可以,js自动获取里面的内容)
     comments_dict_list = []
     for comment in comments:
-        comment = comment.to_dict()
-        comments_dict_list.append(comment)
+        comment_dict = comment.to_dict()
+        # 在渲染评论时添加是否点赞的调价,默认是未点赞
+        comment_dict['is_like'] = False
+
+        # 遍历所有评论, 如果有评论的id在当前用户已经点赞的评论id的列表中,则在这条评论渲染时把‘赞‘置为高亮.即已赞状态
+        if comment.id in comment_like_ids:
+            comment_dict['is_like'] = True
+        comments_dict_list.append(comment_dict)
 
 
     context = {

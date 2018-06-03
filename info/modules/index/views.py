@@ -69,9 +69,10 @@ def index_news():
 
 
 
-# 把视图注册到蓝图
+
 @index_blue.route('/')
 def index():
+    '''显示主页'''
     # 判断登陆中显示用户名, 退出了显示"登陆/注册"
     # 1, 从redis获取用户登陆信息,直接取user_id
     # 2, 主页点击排行
