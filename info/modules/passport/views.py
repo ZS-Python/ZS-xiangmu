@@ -17,6 +17,8 @@ def exit():
         session.pop('user_id',None) # None如果没清成功,强制清空
         session.pop('mobile',None)
         session.pop('nick_name',None)
+        # 管理员退出登陆时,清除is_admin,防止非管理员账号冒用登陆后台.
+        session.pop('is_admin',False)
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=response_code.RET.DBERR, errmsg='退出登陆失败')
