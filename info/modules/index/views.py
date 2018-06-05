@@ -109,9 +109,9 @@ def index():
 
     # 渲染的很多
     context = {
-        'user':user,
-        'news_clicks':news_clicks,
-        'categories':categories
+        'user': user.to_dict() if user else None,
+        'news_clicks': news_clicks,
+        'categories': categories
     }
 
 

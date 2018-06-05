@@ -286,10 +286,10 @@ def news_detail(news_id):
 
 
     context = {
-       'user':user,
-       'news_clicks':news_clicks,
-       'news':news.to_dict(),     # 对数据的优化(包括时间格式化,创建作者),把模型对象转成字典,前段省了很多工作
-       'is_collected':is_collected,
+       'user': user.to_dict() if user else None,
+       'news_clicks': news_clicks,
+       'news': news.to_dict(),     # 对数据的优化(包括时间格式化,创建作者),把模型对象转成字典,前段省了很多工作
+       'is_collected': is_collected,
        'comment': comments_dict_list
     }
 

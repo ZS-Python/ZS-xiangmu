@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>用户中心</title>
+	<link rel="stylesheet" type="text/css" href="../../static/news/css/reset.css">
+    <link rel="stylesheet" type="text/css" href="../../static/news/css/jquery.pagination.css">
+    <link rel="stylesheet" type="text/css" href="../../static/news/css/main.css">
+    <script type="text/javascript" src="../../static/news/js/jquery-1.12.4.min.js"></script>
+	<script type="text/javascript" src="../../static/news/js/jquery.pagination.min.js"></script>
+                                                                    {#   分页插件  #}
+</head>
+<body class="inframe_body">
+    <div class="my_collect">
+        <h3>我的收藏</h3>
+        <ul class="article_list">
+            {% for news in context.news_list %}
+                <li><a href="/news/{{ news.id }}" target="_blank">{{ news.title }}</a><span>{{ news.create_time }}</span></li>
+            {% endfor %}
+
+        </ul>
+
+{#    分页插件   #}
+        <div id="pagination" class="page"></div>
+        <script>
+            $(function() {
+                $("#pagination").pagination({
+                    currentPage: {{ context.current_page }},
+                    totalPage: {{ context.total_page }},
+                    callback: function(current) {    // current表示点击的那一页的页码
+                        // 跳转到点击的页码
+                        window.location.href = '/user/user_collection?p=' + current
+                    }
+                });
+            });
+        </script>
+
+    </div>
+</body>
+</html>
