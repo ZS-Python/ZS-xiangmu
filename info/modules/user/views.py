@@ -1,22 +1,18 @@
 from . import user_blue
-from flask import render_template,session,current_app,jsonify,redirect,url_for,request
+from flask import render_template,session,current_app,jsonify,redirect,url_for,request,g
 from info.models import User,News,Category
 from info import response_code,db,constants
 from info.utils.first_storage import upload_file
+from info.utils.comment import user_login_data
 
 
 @user_blue.route('/user_news_list')
+@user_login_data
 def user_news_list():
     '''个人中心新闻列表'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
+
     if not user:
         return redirect(url_for('index.index'))
 
@@ -28,10 +24,10 @@ def user_news_list():
         current_app.logger.error(e)
         page = '1'
 
-    # 3, 获取当前用户发布的新闻
+    # 3, 分页获取当前用户发布的新闻
     paginate = None
     try:
-        paginate = News.query.filter(News.user_id == user.id).paginate(page,constants.USER_COLLECTION_MAX_NEWS,False)
+        paginate = News.query.filter(News.user_id == user.id).order_by(News.create_time.desc()).paginate(page,10,False)
     except Exception as e:
         current_app.logger.error(e)
 
@@ -58,17 +54,12 @@ def user_news_list():
 
 
 @user_blue.route('/news_release',methods=['GET','POST'])
+@user_login_data
 def news_release():
     '''个人中心新闻发布'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
+
     if not user:
         return redirect(url_for('index.index'))
 
@@ -140,17 +131,11 @@ def news_release():
 
 
 @user_blue.route('/user_collection')
+@user_login_data
 def user_collection():
     '''我的收藏'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
     if not user:
         return redirect(url_for('index.index'))
 
@@ -190,17 +175,11 @@ def user_collection():
 
 
 @user_blue.route('/pass_info',methods=['GET','POST'])
+@user_login_data
 def pass_info():
     '''修改密码'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
     if not user:
         return redirect(url_for('index.index'))
 
@@ -237,17 +216,11 @@ def pass_info():
 
 
 @user_blue.route('/pic_info',methods=['GET','POST'])
+@user_login_data
 def pic_info():
     '''上传头像'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
     if not user:
         return redirect(url_for('index.index'))
 
@@ -305,17 +278,11 @@ def pic_info():
 
 
 @user_blue.route('/base_info',methods=['GET','POST'])
+@user_login_data
 def base_info():
     '''设置基本资料'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
 
     if request.method == 'GET':
         # 准备填充资料页面的数据
@@ -361,17 +328,11 @@ def base_info():
 
 
 @user_blue.route('/user_info')
+@user_login_data
 def user_info():
     '''个人中心首页'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
 
     # 限制： 用户必须登陆后才能进入个人中心(点击退出进入主页)
     if not user:

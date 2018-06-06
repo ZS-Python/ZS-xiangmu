@@ -133,6 +133,7 @@ $(function(){
                     $('.comment_sub').blur();
                     // 清空输入框内容
                     $(".comment_input").val("")
+
                     // 每次评论完更新评论条数
                     updateCommentCount()
                 }else {
@@ -218,7 +219,7 @@ $(function(){
 
         if(sHandler.indexOf('reply_sub')>=0)
         {
-
+            // 回复评论
             var $this = $(this)
             var news_id = $this.parent().attr('data-newsid')
             var parent_id = $this.parent().attr('data-commentid')

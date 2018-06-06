@@ -1,7 +1,8 @@
 from . import index_blue
-from flask import render_template,current_app,session,request,jsonify
-from info.models import User,News,Category
+from flask import render_template,current_app,request,jsonify,g
+from info.models import News,Category
 from info import constants,response_code
+from info.utils.comment import user_login_data
 
 
 # 展示主页新闻
@@ -33,10 +34,10 @@ def index_news():
     # 3,根据参数查询用户需要的数据,根据新闻发布时间倒序,并分页显示
     if cid == 1:
         # 所有新闻分类按发布时间倒序并分页
-        paginate = News.query.order_by(News.create_time.desc()).paginate(page, per_page, False)
+        paginate = News.query.filter(News.status==0).order_by(News.create_time.desc()).paginate(page, per_page, False)
     else:
         # 指定新闻分类按发布时间倒序并分页
-        paginate = News.query.filter(News.category_id == cid).order_by(News.create_time.desc()).paginate(page, per_page, False)
+        paginate = News.query.filter(News.category_id == cid,News.status==0).order_by(News.create_time.desc()).paginate(page, per_page, False)
 
     print(paginate)  # <flask_sqlalchemy.Pagination object at 0x7f48d014c828>
     # paginate是个分页模型对象
@@ -71,6 +72,7 @@ def index_news():
 
 
 @index_blue.route('/')
+@user_login_data
 def index():
     '''显示主页'''
     # 判断登陆中显示用户名, 退出了显示"登陆/注册"
@@ -80,15 +82,7 @@ def index():
 
 
     # 1, 从redis获取用户登陆信息,直接取user_id
-    user_id = session.get('user_id')
-
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)    # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
 
     # 2, 显示点击排行
     # 查询新闻数据,根据clicks的点击量进行倒序排序

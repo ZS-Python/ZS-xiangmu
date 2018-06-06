@@ -12,7 +12,7 @@ from info.models import User
 @passport_blue.route('/exit')
 def exit():
     '''退出登陆'''
-    # 1, 清理session
+    # 清理session
     try:
         session.pop('user_id',None) # None如果没清成功,强制清空
         session.pop('mobile',None)
@@ -194,7 +194,7 @@ def sms_code():
         return jsonify(errno=response_code.RET.DATAERR, errmsg='输入验证码有误')
 
     # 5,如果成功,生成短信验证码(不足六位数字,前面用0补充)
-    sms_code = '%06d' % random.randint(0, 999999)
+    sms_codes = '%06d' % random.randint(0, 999999)
     print(sms_code)
 
     # 6,调用CCP()封装的发送短信的方法,发送短信给手机
@@ -204,7 +204,7 @@ def sms_code():
 
     # 7,存储短信验证码到服务器, 后来注册时判断输入的验证码是否正确
     try:
-        redis_store.set('SMS:' + mobile, sms_code, constants.IMAGE_CODE_REDIS_EXPIRES)
+        redis_store.set('SMS:' + mobile, sms_codes, constants.IMAGE_CODE_REDIS_EXPIRES)
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=response_code.RET.DBERR, errmsg='存储短信验证码失败')

@@ -1,7 +1,8 @@
 from .import news_blue
-from flask import render_template,session,current_app,abort,request,jsonify
+from flask import render_template,session,current_app,abort,request,jsonify,g
 from info.models import News,User,Comment,CommentLike
 from info import constants,db,response_code
+from info.utils.comment import user_login_data
 # 把视图注册到蓝图
 
 
@@ -9,12 +10,8 @@ from info import constants,db,response_code
 def comment_like():
     '''点赞和取消点赞'''
     # 1,获取用户信息
-    user_id = session.get('user_id')
-    user = None
-    try:
-        user = User.query.get(user_id)
-    except Exception as e:
-        current_app.logger.error(e)
+    user = g.user
+
     if not user:
         return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登陆')
 
@@ -40,14 +37,14 @@ def comment_like():
 
     # 5, 点赞和取消点赞
     # 点赞和取消点赞之前要查询点赞记录存在不存在
-    comment_like_model = CommentLike.query.filter(CommentLike.user_id == user_id,CommentLike.comment_id == comment_id).first()
+    comment_like_model = CommentLike.query.filter(CommentLike.user_id == user.id,CommentLike.comment_id == comment_id).first()
 
     if action == 'add':
         # 如果点赞记录不存在才能点赞
         if not comment_like_model:
             comment_like_model = CommentLike()
             comment_like_model.comment_id = comment_id
-            comment_like_model.user_id = user_id
+            comment_like_model.user_id = user.id
             # 累加点赞量
             comment.like_count += 1
 
@@ -74,17 +71,12 @@ def comment_like():
 
 
 @news_blue.route('/news_comment',methods=['POST'])
+@user_login_data
 def news_comment():
     '''新闻评论和回复评论'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
+
     if not user:
         return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登陆')
 
@@ -146,17 +138,11 @@ def news_comment():
 
 
 @news_blue.route('/news_collect',methods=['POST'])
+@user_login_data
 def news_collect():
     '''新闻收藏和取消收藏'''
     # 1, 判断用户是否登陆
-    user_id = session.get('user_id')
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
     if not user:
         return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登陆')
 
@@ -201,6 +187,7 @@ def news_collect():
 
 
 @news_blue.route('/detail/<int:news_id>')
+@user_login_data
 def news_detail(news_id):
     '''显示新闻详情'''
     # 判断登陆中显示用户名, 退出了显示"登陆/注册"
@@ -212,15 +199,7 @@ def news_detail(news_id):
     # 6, 展示新闻评论和评论回复
 
     # 1, 从redis获取用户登陆信息,直接取user_id
-    user_id = session.get('user_id')
-
-    user = None
-    # 判断是否信息存在,存在则显示该用户名
-    if user_id:
-        try:
-            user = User.query.get(user_id)  # user是通过user_id创建的指定对象
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
 
     # 2, 显示点击排行
     # 查询新闻数据,根据clicks的点击量进行倒序排序
@@ -231,6 +210,8 @@ def news_detail(news_id):
     except Exception as e:
         current_app.logger.error(e)
 
+
+
     # 3, 按点击的新闻的id获取对应的新闻详情
     try:
         news = News.query.get(news_id)
@@ -238,6 +219,8 @@ def news_detail(news_id):
         current_app.logger.error(e)
     if not news:
         abort(404)
+
+
 
     # 4,点击量加1,更新到数据库News表
     news.clicks += 1
@@ -255,7 +238,7 @@ def news_detail(news_id):
 
     # 6, 展示所有用户的新闻评论和评论回复
     try:
-        comments = Comment.query.filter(Comment.news_id == News.id).order_by(Comment.create_time.desc()).all()  # 按时间倒序查看全部的评价
+        comments = Comment.query.filter(Comment.news_id == news_id).order_by(Comment.create_time.desc()).all()  # 按时间倒序查看全部的评价
     except Exception as e:
         current_app.logger.error(e)
 

@@ -1,7 +1,5 @@
 from datetime import datetime
-
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from info import db
 from info import constants
 
@@ -132,6 +130,7 @@ class News(BaseModel, db.Model):
             "create_time": self.create_time.strftime("%Y-%m-%d %H:%M:%S"),
             "index_image_url": self.index_image_url,
             "clicks": self.clicks,
+            "status": self.status,
         }
         return resp_dict
 
