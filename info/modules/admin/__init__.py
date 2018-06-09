@@ -21,6 +21,6 @@ def check_admin():
     #  4,如果非管理员此时登陆账户, 点击登陆按钮后,发出新的请求，又要在这里重新判断一次,
         # 因为is_admin=False,新的请求路由是admin/index, 所以条件成立, 跳转到新闻主页
     #  5,如果管理员登陆, 点登陆请求后,也是重新再判断一次, 因为is_true是Ture, 新的请求
-        # 路由是admin/login, 所以条件不成立, 会切换到自己的请求站点也就是admin/index.
+        # 路由是admin/index, 所以条件不成立, 会切换到自己的请求站点也就是admin/index.
     if not is_admin and not request.url.endswith('/admin/login'):
         return redirect(url_for('index.index'))

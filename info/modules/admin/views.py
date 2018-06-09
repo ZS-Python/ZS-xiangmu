@@ -435,6 +435,9 @@ def user_count():
         except Exception as e:
             current_app.logger.error(e)
 
+    # 反转列表
+    active_date.reverse()
+    active_count.reverse()
 
     context = {
         'total_count': total_count,

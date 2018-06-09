@@ -6,7 +6,63 @@ from info.utils.comment import user_login_data
 # 把视图注册到蓝图
 
 
+@news_blue.route('/followed_user',methods=['POST'])
+@user_login_data
+def followed_user():
+    '''当前用户关注和取消关注新闻作者'''
+    # 1,获取用户信息
+    user = g.user
+    if not user:
+        return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登陆')
+
+    # 接收参数
+    action = request.json.get('action')
+    news_author_id = request.json.get('user_id')
+
+    # 校验参数
+    if not all([action,news_author_id]):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+    if action not in ['follow','unfollow']:
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数错误')
+
+    # 查询要关注的作者存不存在
+    try:
+        news_author = User.query.get(news_author_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='查询作者失败')
+    if not news_author:
+        return jsonify(errno=response_code.RET.NODATA, errmsg='作者不存在')
+
+    if action == 'follow':
+        # 关注作者
+        try:  #这是当前用户关注的人的列表
+            user.followed.append(news_author)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='关注失败')
+    else:
+        try:
+            user.followed.remove(news_author)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='取消关注成功')
+
+    # 同步数据库
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='操作失败')
+
+    # 响应结果
+    return jsonify(errno=response_code.RET.OK, errmsg='操作成功')
+
+
+
 @news_blue.route('/comment_like',methods=['POST'])
+@user_login_data
 def comment_like():
     '''点赞和取消点赞'''
     # 1,获取用户信息
@@ -210,8 +266,6 @@ def news_detail(news_id):
     except Exception as e:
         current_app.logger.error(e)
 
-
-
     # 3, 按点击的新闻的id获取对应的新闻详情
     try:
         news = News.query.get(news_id)
@@ -219,8 +273,6 @@ def news_detail(news_id):
         current_app.logger.error(e)
     if not news:
         abort(404)
-
-
 
     # 4,点击量加1,更新到数据库News表
     news.clicks += 1
@@ -268,12 +320,29 @@ def news_detail(news_id):
         comments_dict_list.append(comment_dict)
 
 
+    # 我的关注
+    # 查询该新闻对象查询该新闻的作者
+    try:
+        news_author = news.user
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(404)
+
+    # is_followed = False表示登陆用户未关注该新闻作者
+    is_followed = False
+    if news_author and user:
+        if news_author in user.followed:
+            is_followed = True
+
+
     context = {
        'user': user.to_dict() if user else None,
        'news_clicks': news_clicks,
        'news': news.to_dict(),     # 对数据的优化(包括时间格式化,创建作者),把模型对象转成字典,前段省了很多工作
        'is_collected': is_collected,
-       'comment': comments_dict_list
+       'comment': comments_dict_list,
+       'news_author': news_author.to_dict() if news_author else None,
+       'is_followed': is_followed
     }
 
 
